@@ -136,7 +136,7 @@ const verify = async (req, res, next) => {
     const user = await Users.findByVerifyTokenEmail(req.params.verificationToken);
     if (user) {
       await Users.updateVerifyToken(user.id, true, null);
-      return res.redirect("https://goitapp.netlify.app/login");
+      return res.redirect("https://incorporatenow.netlify.app/login");
     }
 
     return res.status(HttpCode.NOT_FOUND).json({

@@ -24,7 +24,7 @@ class EmailService {
       theme: "neopolitan",
       product: {
         name: "User menu",
-        link: "https://level-99-app.netlify.app/login",
+        link: "https://incorporatenow.netlify.app/login",
       },
     });
     const email = {
