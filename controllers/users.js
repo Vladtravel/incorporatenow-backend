@@ -31,10 +31,10 @@ const signup = async (req, res, next) => {
     }
 
     const newUser = await Users.create(req.body);
-    const { id, avatarURL, verifyToken, email } = newUser;
+    const { id, name, avatarURL, verifyToken, email } = newUser;
     try {
       const emailService = new EmailService(process.env.NODE_ENV);
-      await emailService.sendVerifyEmail(verifyToken, email);
+      await emailService.sendVerifyEmail(verifyToken, email, name);
     } catch (e) {
       console.log(e.message);
     }
@@ -44,6 +44,7 @@ const signup = async (req, res, next) => {
       code: HttpCode.CREATED,
       user: {
         id,
+        name,
         email,
         avatarURL,
         verifyToken,
@@ -79,6 +80,7 @@ const login = async (req, res, next) => {
       token,
       user: {
         id: user.id,
+        name: user.name,
         email: user.email,
         avatarURL: user.avatarURL,
         verifyToken: user.verifyToken,
@@ -120,21 +122,18 @@ const currentUser = async (req, res, next) => {
 
 const saveAvatarUserToCloud = async (req) => {
   const pathFile = req.file.path;
-  const { public_id: idCloudAvatar, secure_url: avatarUrl } =
-    await uploadToCloud(pathFile, {
-      public_id: req.user.idCloudAvatar?.replace("Avatars/", ""),
-      folder: "Avatars",
-      transformation: { width: 250, height: 250, crop: "pad" },
-    });
+  const { public_id: idCloudAvatar, secure_url: avatarUrl } = await uploadToCloud(pathFile, {
+    public_id: req.user.idCloudAvatar?.replace("Avatars/", ""),
+    folder: "Avatars",
+    transformation: { width: 250, height: 250, crop: "pad" },
+  });
   await fs.unlink(pathFile);
   return { idCloudAvatar, avatarUrl };
 };
 
 const verify = async (req, res, next) => {
   try {
-    const user = await Users.findByVerifyTokenEmail(
-      req.params.verificationToken
-    );
+    const user = await Users.findByVerifyTokenEmail(req.params.verificationToken);
     if (user) {
       await Users.updateVerifyToken(user.id, true, null);
       return res.redirect("https://goitapp.netlify.app/login");
@@ -154,9 +153,9 @@ const repeatEmailVerify = async (req, res, next) => {
   try {
     const user = await Users.findByEmail(req.body.email);
     if (user) {
-      const { verifyToken, email } = user;
+      const { name, verifyToken, email } = user;
       const emailService = new EmailService(process.env.NODE_ENV);
-      await emailService.sendVerifyEmail(verifyToken, email);
+      await emailService.sendVerifyEmail(verifyToken, email, name);
       return res.status(HttpCode.OK).json({
         status: "success",
         code: HttpCode.OK,
